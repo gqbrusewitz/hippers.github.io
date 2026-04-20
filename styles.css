@@ -1,24 +1,26 @@
 /* ---------- Base ---------- */
 
 :root {
-  --bg: #f7f5f1;
+  --bg: #f8f7f4;
   --surface: #ffffff;
-  --surface-alt: #f0ede6;
-  --ink: #2a2a2a;
-  --ink-soft: #6b6b6b;
-  --ink-faint: #a8a8a8;
-  --border: #e5e2db;
-  --accent: #3a5a4a;
-  --accent-soft: #e8efe9;
+  --surface-alt: #f0eeea;
+  --ink: #1a1a1a;
+  --ink-soft: #666666;
+  --ink-faint: #999999;
+  --border: #e2dfda;
+  --accent: #2d5a4a;
+  --accent-hover: #234739;
+  --accent-soft: #e6efe9;
 
-  --pain-0: #6b8e7f;
-  --pain-low: #5a7ba0;
-  --pain-mid: #c89b5a;
-  --pain-high: #b25555;
+  --pain-0: #5e8a72;
+  --pain-low: #4d7a9d;
+  --pain-mid: #c4904d;
+  --pain-high: #b54545;
 
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.05);
+  --shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
 
   --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
   --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
@@ -149,37 +151,43 @@ h1, h2, h3 {
 
 .btn-primary, .btn-secondary, .btn-danger {
   width: 100%;
-  min-height: 56px;
+  min-height: 52px;
   border-radius: var(--radius);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: transform 0.1s ease, opacity 0.15s ease;
+  transition: all 0.15s ease;
 }
 
 .btn-primary:active, .btn-secondary:active, .btn-danger:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  opacity: 0.9;
 }
 
 .btn-primary {
   background: var(--accent);
   color: white;
+  box-shadow: var(--shadow);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
 }
 
 .btn-secondary {
   background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow);
 }
 
 .btn-danger {
   background: transparent;
   color: var(--pain-high);
   border: 1px solid var(--border);
-  margin-top: 12px;
 }
 
 .btn-icon {
@@ -367,10 +375,10 @@ h1, h2, h3 {
 .exercise-row {
   background: var(--surface-alt);
   border-radius: var(--radius-sm);
-  padding: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .exercise-row-header {
@@ -390,6 +398,28 @@ h1, h2, h3 {
 }
 
 .exercise-name:focus { border-color: var(--accent); }
+
+.exercise-type-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.type-btn {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--surface);
+  color: var(--ink-faint);
+  border: 1px solid var(--border);
+}
+
+.type-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
 
 .btn-remove {
   width: 36px;
@@ -437,6 +467,8 @@ h1, h2, h3 {
 }
 
 .set-grid-row input:focus { border-color: var(--accent); }
+
+.set-grid.hidden { display: none; }
 
 .exercise-display {
   display: flex;
