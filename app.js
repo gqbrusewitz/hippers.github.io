@@ -4,10 +4,10 @@
 
 const STORAGE_KEY = 'hipRecovery.v1';
 const DEFAULT_EXERCISES = [
-  'Bike',
-  'Hip machine',
-  'Leg press (double)',
-  'Leg press (single)',
+  { id: uid(), name: 'Bike', type: 'time', sets: '', reps: '', weight: '', duration: '', intensity: '' },
+  { id: uid(), name: 'Hip machine', type: 'reps', sets: '', reps: '', weight: '', duration: '', intensity: '' },
+  { id: uid(), name: 'Leg press (double)', type: 'reps', sets: '', reps: '', weight: '', duration: '', intensity: '' },
+  { id: uid(), name: 'Leg press (single)', type: 'reps', sets: '', reps: '', weight: '', duration: '', intensity: '' },
 ];
 
 // ---------- State ----------
@@ -193,8 +193,8 @@ function renderNewSession() {
       twoHour: { score: null, notes: '', timestamp: null },
       night: { score: null, notes: '', timestamp: null },
     },
-    exercises: DEFAULT_EXERCISES.map(name => ({
-      id: uid(), name, sets: '', reps: '', weight: ''
+    exercises: DEFAULT_EXERCISES.map(ex => ({
+      id: ex.id, name: ex.name, type: ex.type, sets: '', reps: '', weight: '', duration: '', intensity: ''
     })),
     createdAt: new Date().toISOString(),
   };
@@ -219,8 +219,8 @@ function renderNewSession() {
   const list = tpl.querySelector('[data-exercise-list]');
   session.exercises.forEach(ex => list.appendChild(buildExerciseRow(ex, session)));
 
-  tpl.querySelector('[data-add-exercise]').onclick = () => {
-    const ex = { id: uid(), name: '', sets: '', reps: '', weight: '' };
+tpl.querySelector('[data-add-exercise]').onclick = () => {
+    const ex = { id: uid(), name: '', type: 'reps', sets: '', reps: '', weight: '', duration: '', intensity: '' };
     session.exercises.push(ex);
     list.appendChild(buildExerciseRow(ex, session));
   };
@@ -268,6 +268,25 @@ function buildExerciseRow(exercise, session) {
   nameInput.value = exercise.name;
   nameInput.oninput = (e) => exercise.name = e.target.value;
 
+  const typeBtns = row.querySelectorAll('.type-btn');
+  const gridReps = row.querySelector('[data-grid-reps]');
+  const gridTime = row.querySelector('[data-grid-time]');
+
+  function setType(type) {
+    exercise.type = type;
+    typeBtns.forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.type === type);
+    });
+    gridReps.classList.toggle('hidden', type !== 'reps');
+    gridTime.classList.toggle('hidden', type !== 'time');
+  }
+
+  setType(exercise.type || 'reps');
+
+  typeBtns.forEach(btn => {
+    btn.onclick = () => setType(btn.dataset.type);
+  });
+
   const setsInput = row.querySelector('[data-sets]');
   setsInput.value = exercise.sets;
   setsInput.oninput = (e) => exercise.sets = e.target.value;
@@ -279,6 +298,14 @@ function buildExerciseRow(exercise, session) {
   const weightInput = row.querySelector('[data-weight]');
   weightInput.value = exercise.weight;
   weightInput.oninput = (e) => exercise.weight = e.target.value;
+
+  const durationInput = row.querySelector('[data-duration]');
+  durationInput.value = exercise.duration;
+  durationInput.oninput = (e) => exercise.duration = e.target.value;
+
+  const intensityInput = row.querySelector('[data-intensity]');
+  intensityInput.value = exercise.intensity;
+  intensityInput.oninput = (e) => exercise.intensity = e.target.value;
 
   row.querySelector('[data-remove-exercise]').onclick = () => {
     session.exercises = session.exercises.filter(ex => ex.id !== exercise.id);
@@ -314,12 +341,20 @@ function renderSessionDetail(id) {
     session.exercises.forEach(ex => {
       const row = document.createElement('div');
       row.className = 'exercise-display-row';
-      const detail = [
-        ex.sets && `${ex.sets} sets`,
-        ex.reps && `${ex.reps} reps`,
-        ex.weight && `${ex.weight} lbs`,
-      ].filter(Boolean).join(' · ');
-      row.innerHTML = `<strong>${escapeHtml(ex.name)}</strong><span>${detail || '—'}</span>`;
+      let detail = '';
+      if (ex.type === 'time') {
+        detail = [
+          ex.duration && `${ex.duration}`,
+          ex.intensity && `${ex.intensity}`,
+        ].filter(Boolean).join(' · ') || '—';
+      } else {
+        detail = [
+          ex.sets && `${ex.sets} sets`,
+          ex.reps && `${ex.reps} reps`,
+          ex.weight && `${ex.weight} lbs`,
+        ].filter(Boolean).join(' · ') || '—';
+      }
+      row.innerHTML = `<strong>${escapeHtml(ex.name)}</strong><span>${detail}</span>`;
       exDisplay.appendChild(row);
     });
   }
@@ -486,9 +521,9 @@ function buildChart(sessions) {
   const plotH = H - P * 2;
 
   const series = [
-    { key: 'pre', color: '#6b8e7f' },
-    { key: 'post', color: '#c89b5a' },
-    { key: 'night', color: '#8b6b8e' },
+    { key: 'pre', color: '#5e8a72' },
+    { key: 'post', color: '#c4904d' },
+    { key: 'night', color: '#9e6d8e' },
   ];
 
   const points = sessions.map((s, i) => ({
@@ -601,26 +636,57 @@ function buildPrintSession(session) {
   if (session.exercises.length > 0) {
     const exTable = document.createElement('table');
     exTable.className = 'print-table';
-    exTable.innerHTML = `
-      <thead>
-        <tr>
-          <th>Exercise</th>
-          <th class="num">Sets</th>
-          <th class="num">Reps</th>
-          <th class="num">Weight (lbs)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${session.exercises.map(ex => `
+    const hasTimeExercises = session.exercises.some(ex => ex.type === 'time');
+    
+    if (hasTimeExercises) {
+      exTable.innerHTML = `
+        <thead>
           <tr>
-            <td>${escapeHtml(ex.name)}</td>
-            <td class="num">${ex.sets || '—'}</td>
-            <td class="num">${ex.reps || '—'}</td>
-            <td class="num">${ex.weight || '—'}</td>
+            <th>Exercise</th>
+            <th>Type</th>
+            <th class="num">Sets</th>
+            <th class="num">Reps</th>
+            <th class="num">Weight</th>
+            <th class="num">Duration</th>
+            <th>Intensity</th>
           </tr>
-        `).join('')}
-      </tbody>
-    `;
+        </thead>
+        <tbody>
+          ${session.exercises.map(ex => `
+            <tr>
+              <td>${escapeHtml(ex.name)}</td>
+              <td>${ex.type === 'time' ? 'Time' : 'Reps'}</td>
+              <td class="num">${ex.sets || '—'}</td>
+              <td class="num">${ex.reps || '—'}</td>
+              <td class="num">${ex.weight || '—'}</td>
+              <td class="num">${ex.duration || '—'}</td>
+              <td>${ex.intensity || '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+    } else {
+      exTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>Exercise</th>
+            <th class="num">Sets</th>
+            <th class="num">Reps</th>
+            <th class="num">Weight (lbs)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${session.exercises.map(ex => `
+            <tr>
+              <td>${escapeHtml(ex.name)}</td>
+              <td class="num">${ex.sets || '—'}</td>
+              <td class="num">${ex.reps || '—'}</td>
+              <td class="num">${ex.weight || '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      `;
+    }
     wrap.appendChild(exTable);
   }
 
