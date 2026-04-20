@@ -143,9 +143,9 @@
         <h3>Pain trend</h3>
         <div class="chart" data-chart-svg></div>
         <div class="chart-legend">
-          <span><i class="dot-legend" style="background:#6b8e7f"></i>Before</span>
-          <span><i class="dot-legend" style="background:#c89b5a"></i>After</span>
-          <span><i class="dot-legend" style="background:#8b6b8e"></i>Night</span>
+          <span><i class="dot-legend" style="background:#5e8a72"></i>Before</span>
+          <span><i class="dot-legend" style="background:#c4904d"></i>After</span>
+          <span><i class="dot-legend" style="background:#9e6d8e"></i>Night</span>
         </div>
       </div>
 
@@ -176,7 +176,7 @@
         <div data-print-body></div>
 
         <footer class="print-footer">
-          Pain scale: 0 (none) — 10 (worst imaginable). Notes in italics.
+          Pain scale: 0 (none) — 10 (worst imaginable). Time exercises: duration + intensity. Notes in italics.
         </footer>
       </article>
     </main>
@@ -188,16 +188,30 @@
         <input type="text" class="exercise-name" data-exercise-name placeholder="Exercise name">
         <button class="btn-remove" data-remove-exercise aria-label="Remove exercise">×</button>
       </div>
-      <div class="set-grid">
+      <div class="exercise-type-toggle">
+        <button class="type-btn active" data-type="reps" type="button">Reps</button>
+        <button class="type-btn" data-type="time" type="button">Time</button>
+      </div>
+      <div class="set-grid" data-grid-reps>
         <div class="set-grid-header">
           <span>Sets</span>
           <span>Reps</span>
-          <span>Weight (lbs)</span>
+          <span>Weight</span>
         </div>
         <div class="set-grid-row">
           <input type="number" inputmode="numeric" data-sets placeholder="3" min="0">
           <input type="number" inputmode="numeric" data-reps placeholder="10" min="0">
-          <input type="number" inputmode="decimal" data-weight placeholder="45" min="0" step="0.5">
+          <input type="number" inputmode="decimal" data-weight placeholder="lbs" min="0" step="0.5">
+        </div>
+      </div>
+      <div class="set-grid hidden" data-grid-time>
+        <div class="set-grid-header">
+          <span>Duration</span>
+          <span>Intensity</span>
+        </div>
+        <div class="set-grid-row">
+          <input type="text" inputmode="numeric" data-duration placeholder="min:sec">
+          <input type="text" placeholder="level" data-intensity>
         </div>
       </div>
     </div>
