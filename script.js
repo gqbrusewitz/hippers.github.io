@@ -350,6 +350,7 @@ let compositionChart;
 let volumeChart;
 let frequencyChart;
 let recoveryPainChart;
+let editingRecoveryId = null;
 let deferredPrompt = null;
 
 const DEFAULT_RECOVERY_EXERCISES = [
@@ -922,6 +923,17 @@ function aggregateWeekly() {
     current.count += 1;
     map.set(weekKey, current);
   });
+  recoverySessions.forEach((s) => {
+    const weekKey = getWeekKey(s.date);
+    const current = map.get(weekKey) || { label: weekKey, volume: 0, count: 0 };
+    s.exercises.forEach((ex) => {
+      if (ex.type === "weight") {
+        ex.sets.forEach((set) => { current.volume += (set.reps || 0) * (set.weight || 0); });
+      }
+    });
+    current.count += 1;
+    map.set(weekKey, current);
+  });
   return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label));
 }
 
@@ -940,6 +952,17 @@ function renderPRs() {
         const existing = prMap.get(ex.name);
         if (!existing || s.weight > existing.weight) {
           prMap.set(ex.name, { ...s, date: w.date });
+        }
+      });
+    });
+  });
+  recoverySessions.forEach((s) => {
+    s.exercises.forEach((ex) => {
+      if (ex.type !== "weight") return;
+      ex.sets.forEach((set) => {
+        const existing = prMap.get(ex.name);
+        if (!existing || set.weight > existing.weight) {
+          prMap.set(ex.name, { ...set, date: s.date });
         }
       });
     });
@@ -1088,7 +1111,6 @@ function gatherRecoverySession() {
   const post2 = { pain: parseInt(qs("#post2Pain").value), notes: qs("#post2Notes").value.trim() };
   const postNight = { pain: parseInt(qs("#postNightPain").value), notes: qs("#postNightNotes").value.trim() };
   return {
-    id: crypto.randomUUID(),
     date,
     pre: { pain: prePain, notes: preNotes },
     exercises,
@@ -1102,12 +1124,25 @@ function saveRecoverySession() {
     alert("Add at least one exercise");
     return;
   }
-  recoverySessions.unshift(data);
+  let message = "Session saved!";
+  if (editingRecoveryId) {
+    const idx = recoverySessions.findIndex((s) => s.id === editingRecoveryId);
+    data.id = editingRecoveryId;
+    if (idx !== -1) {
+      recoverySessions[idx] = data;
+    } else {
+      recoverySessions.unshift(data);
+    }
+    message = "Session updated!";
+  } else {
+    data.id = crypto.randomUUID();
+    recoverySessions.unshift(data);
+  }
   saveToStorage(STORAGE_KEYS.recoverySessions, recoverySessions);
   renderRecoveryHistory();
-  buildRecoveryChart();
+  updateAnalytics();
   clearRecoveryForm();
-  alert("Session saved!");
+  alert(message);
 }
 
 function clearRecoveryForm() {
@@ -1129,6 +1164,8 @@ function clearRecoveryForm() {
   qs("#post2Notes").value = "";
   qs("#postNightNotes").value = "";
   qs("#recoveryExercises").innerHTML = "";
+  editingRecoveryId = null;
+  qs("#saveRecoverySession").textContent = "Save session";
 }
 
 function renderRecoveryHistory() {
@@ -1153,7 +1190,7 @@ function renderRecoveryHistory() {
       <p class="workout-meta">Exercises: ${session.exercises.map((e) => e.name).join(", ")}</p>
       <div class="helper-row">
         <button class="button-secondary view-detail" data-idx="${idx}">View</button>
-        <button class="button-secondary load-session" data-idx="${idx}">Load</button>
+        <button class="button-secondary edit-session" data-idx="${idx}">Edit</button>
         <button class="button-secondary delete-session" data-idx="${idx}">Delete</button>
       </div>
     `;
@@ -1162,7 +1199,7 @@ function renderRecoveryHistory() {
   list.querySelectorAll(".view-detail").forEach((btn) => {
     btn.addEventListener("click", () => showRecoveryDetail(parseInt(btn.dataset.idx)));
   });
-  list.querySelectorAll(".load-session").forEach((btn) => {
+  list.querySelectorAll(".edit-session").forEach((btn) => {
     btn.addEventListener("click", () => loadRecoverySession(parseInt(btn.dataset.idx)));
   });
   list.querySelectorAll(".delete-session").forEach((btn) => {
@@ -1253,7 +1290,9 @@ function loadRecoverySession(idx) {
     });
   });
   initPainSliders();
-  alert("Session loaded");
+  editingRecoveryId = session.id;
+  qs("#saveRecoverySession").textContent = "Update session";
+  qs("#recoveryTab").scrollIntoView({ behavior: "smooth" });
 }
 
 function deleteRecoverySession(idx) {
