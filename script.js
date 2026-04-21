@@ -1017,6 +1017,24 @@ function initPainSliders() {
   });
 }
 
+function updatePainSliderButtons() {
+  document.querySelectorAll(".rating-row").forEach((row) => {
+    const targetId = row.dataset.target;
+    const hidden = qs("#" + targetId);
+    const display = qs("#" + targetId + "Display");
+    const val = parseInt(hidden.value) || 0;
+    row.querySelectorAll(".rating-btn").forEach((b) => b.classList.remove("active"));
+    const activeBtn = row.querySelector(`[data-value="${val}"]`);
+    if (activeBtn) {
+      activeBtn.classList.add("active");
+    }
+    if (display) {
+      display.textContent = val;
+      display.className = `pain-display ${getPainClass(val)}`;
+    }
+  });
+}
+
 function addRecoveryExerciseCard(prefill = null) {
   const area = qs("#recoveryExercises");
   const card = document.createElement("div");
@@ -1271,25 +1289,28 @@ function loadRecoverySession(idx) {
   qs("#postNightNotes").value = session.post.night.notes;
   qs("#recoveryExercises").innerHTML = "";
   session.exercises.forEach((ex) => {
-    const defaults = DEFAULT_RECOVERY_EXERCISES.find((e) => e.name === ex.name);
-    addRecoveryExerciseCard({ name: ex.name, type: defaults?.type || "weight" });
+    addRecoveryExerciseCard({ name: ex.name, type: ex.type });
     const card = qsa(".recovery-exercise-card").slice(-1)[0];
-    card.querySelector(".recovery-sets").innerHTML = "";
-    const inputType = defaults?.type || "weight";
+    const inputType = ex.type;
+    const container = inputType === "time"
+      ? card.querySelector(".time-fields")
+      : card.querySelector(".reps-fields");
     ex.sets.forEach((s) => {
-      addRecoverySetRow(card, inputType);
-      const row = card.querySelector(".recovery-sets").querySelectorAll(".set-row").slice(-1)[0];
-      if (s.duration) {
+      addSetRow(card, inputType);
+      const row = container.querySelectorAll(".set-row-new").slice(-1)[0];
+      if (s.duration !== undefined) {
         row.querySelector(".set-duration").value = s.duration;
+        if (s.intensity !== undefined) {
+          row.querySelector(".set-intensity").value = s.intensity;
+        }
       } else {
         row.querySelector(".set-reps").value = s.reps;
-        row.querySelector(".set-weight").value = s.reps;
-        row.querySelector(".set-load").value = s.weight;
+        row.querySelector(".set-weight").value = s.weight;
       }
-      row.querySelector(".set-note").value = s.note;
     });
   });
   initPainSliders();
+  updatePainSliderButtons();
   editingRecoveryId = session.id;
   qs("#saveRecoverySession").textContent = "Update session";
   qs("#recoveryTab").scrollIntoView({ behavior: "smooth" });
